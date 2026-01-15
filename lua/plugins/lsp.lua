@@ -11,6 +11,39 @@ return {
 	    "mfussenegger/nvim-dap"
 	},
 	config = function()
+	    -- 1. FUNCIÓN DE AUTO-DETECCIÓN (Para portabilidad total)
+	    local function find_java_path(version)
+		local jvm_path = "/usr/lib/jvm/"
+		local handle = vim.loop.fs_scandir(jvm_path)
+		if not handle then return nil end
+
+		while true do
+		    local name, type = vim.loop.fs_scandir_next(handle)
+		    if not name then break end
+
+		    -- FILTROS CRUCIALES: 
+		    -- 1. Que contenga la versión (8, 11, 21)
+		    -- 2. Que NO empiece por punto (ignora .jinfo y archivos ocultos)
+		    -- 3. Que sea un directorio o un enlace simbólico
+		    if name:find("temurin%-" .. version) 
+			and not name:match("^%.") 
+			and (type == "directory" or type == "link") then
+			return jvm_path .. name
+		    end
+		end
+		return nil
+	    end
+
+	    -- Obtenemos las rutas dinámicamente
+	    local path_21 = find_java_path("21")
+	    local path_11 = find_java_path("11")
+	    local path_8  = find_java_path("8")
+
+	    -- Validación de seguridad: si no encuentra el 21, avisamos
+	    if not path_21 then
+		vim.notify("JDTLS: No se encontró el JDK de Java 21 en /usr/lib/jvm/", vim.log.levels.ERROR)
+		return
+	    end
 
 	    vim.keymap.set('n', '<A-o>', function()
 		require('jdtls').organize_imports()
@@ -36,24 +69,30 @@ return {
 		require('jdtls').extract_method({visual = true})
 	    end, { desc = 'Extract method' })
 
-	    -- Enhanced JDTLS configuration
 	    local root_dir = vim.fs.dirname(vim.fs.find({'gradlew', '.git', 'mvnw', 'build.gradle', 'pom.xml', 'settings.gradle'}, { upward = true })[1])
 	    local project_name = vim.fn.fnamemodify(root_dir, ":p:h:t")
 	    local workspace_dir = vim.fn.stdpath('data') .. '/workspace/' .. project_name
 	    local is_libgdx = vim.fn.findfile('core/build.gradle', root_dir..';') ~= ''
-	    -- wen auto installed edit the jdtls.py and replace JAVA_HOME to match JAVA_JDK_21 and set the environment variable
+
 	    local jdtls_bin = vim.env.MASON .. '/bin/jdtls'
-	    if jit.os == "Windows" then
-		-- match JAVA_JDK_21
-		-- get from https://download.eclipse.org/jdtls/snapshots/?d
-		jdtls_bin = vim.fn.expand('~/AppData/Local/jdt-language-server-latest/bin/jdtls');
-	    end
+
 	    local config = {
-		cmd = {jdtls_bin},
+		-- AQUÍ ESTÁ EL TRUCO: Forzamos al script de Mason a usar Java 21 para el SERVIDOR
+		-- Esto evita tener que editar el archivo .py de Mason
+		cmd = {
+		    jdtls_bin,
+		    "--java-executable", path_21 .. "/bin/java"
+		},
 		root_dir = root_dir,
 		settings = {
 		    java = {
 			configuration = {
+			    -- JDTLS usará estos para COMPILAR según el proyecto
+			    runtimes = {
+				{ name = "JavaSE-1.8", path = path_8 },
+				{ name = "JavaSE-11",  path = path_11 },
+				{ name = "JavaSE-21",  path = path_21, default = true },
+			    },
 			    updateBuildConfiguration = "automatic",
 			    annotationProcessing = {
 				enabled = true,
@@ -68,7 +107,6 @@ return {
 				"org.springframework.*",
 				"org.junit.*",
 				"org.mockito.Mockito.*",
-				-- LibGDX additions (only added if libGDX detected)
 				is_libgdx and "com.badlogic.gdx.*" or nil,
 			    },
 			    importOrder = is_libgdx and { "com.badlogic", "java", "javax", "" } or nil
@@ -79,7 +117,6 @@ return {
 		    extendedClientCapabilities = {
 			progressReportProvider = true,
 			classFileContentsSupport = true,
-			-- LibGDX-specific enhancements
 			advancedOrganizeImportsSupport = is_libgdx or nil
 		    },
 		    bundles = {
@@ -87,17 +124,14 @@ return {
 		    },
 		    workspace = workspace_dir,
 		    jvm_args = is_libgdx and {
-			"-Xms1g",
-			"-Xmx4g",
+			"-Xms1g", "-Xmx4g",
 			"--add-opens", "java.base/java.util=ALL-UNNAMED"
 		    } or nil
 		},
 		capabilities = require('cmp_nvim_lsp').default_capabilities()
 	    }
 
-	    -- Start JDTLS with the enhanced config
-	    require("lspconfig").jdtls.setup(config)
-
+		require('jdtls').start_or_attach(config)
 	    -- Your existing nvim-cmp setup (unchanged)
 	    vim.api.nvim_create_autocmd('FileType', {
 		pattern = 'java',
