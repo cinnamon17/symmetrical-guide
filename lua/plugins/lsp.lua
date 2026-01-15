@@ -11,7 +11,6 @@ return {
 	    "mfussenegger/nvim-dap"
 	},
 	config = function()
-	    -- 1. FUNCIÓN DE AUTO-DETECCIÓN (Para portabilidad total)
 	    local function find_java_path(version)
 		local jvm_path = "/usr/lib/jvm/"
 		local handle = vim.loop.fs_scandir(jvm_path)
@@ -20,11 +19,6 @@ return {
 		while true do
 		    local name, type = vim.loop.fs_scandir_next(handle)
 		    if not name then break end
-
-		    -- FILTROS CRUCIALES: 
-		    -- 1. Que contenga la versión (8, 11, 21)
-		    -- 2. Que NO empiece por punto (ignora .jinfo y archivos ocultos)
-		    -- 3. Que sea un directorio o un enlace simbólico
 		    if name:find("temurin%-" .. version) 
 			and not name:match("^%.") 
 			and (type == "directory" or type == "link") then
@@ -34,12 +28,10 @@ return {
 		return nil
 	    end
 
-	    -- Obtenemos las rutas dinámicamente
 	    local path_21 = find_java_path("21")
 	    local path_11 = find_java_path("11")
 	    local path_8  = find_java_path("8")
 
-	    -- Validación de seguridad: si no encuentra el 21, avisamos
 	    if not path_21 then
 		vim.notify("JDTLS: No se encontró el JDK de Java 21 en /usr/lib/jvm/", vim.log.levels.ERROR)
 		return
@@ -77,8 +69,6 @@ return {
 	    local jdtls_bin = vim.env.MASON .. '/bin/jdtls'
 
 	    local config = {
-		-- AQUÍ ESTÁ EL TRUCO: Forzamos al script de Mason a usar Java 21 para el SERVIDOR
-		-- Esto evita tener que editar el archivo .py de Mason
 		cmd = {
 		    jdtls_bin,
 		    "--java-executable", path_21 .. "/bin/java"
@@ -87,7 +77,6 @@ return {
 		settings = {
 		    java = {
 			configuration = {
-			    -- JDTLS usará estos para COMPILAR según el proyecto
 			    runtimes = {
 				{ name = "JavaSE-1.8", path = path_8 },
 				{ name = "JavaSE-11",  path = path_11 },
