@@ -18,7 +18,8 @@ vim.opt.rtp:prepend(lazypath)
 -- Make sure to setup `mapleader` and `maplocalleader` before
 -- loading lazy.nvim so that mappings are correct.
 -- This is also a good place to setup other settings (vim.opt)
-vim.g.python3_host_prog = vim.fn.expand('~/.pyenv/versions/3.11.6/bin/python')
+vim.g.python3_host_prog = vim.fn.expand("~/.local/share/nvim/python_env/bin/python3")
+vim.g.loaded_julia_provider = 0
 
 if jit.os == "Windows" then
     vim.g.python3_host_prog = vim.fn.expand('~/.pyenv/pyenv-win/versions/3.11.6/python')
