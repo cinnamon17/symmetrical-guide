@@ -11,6 +11,7 @@ return {
 	    "mfussenegger/nvim-dap"
 	},
 	config = function()
+
 	    local function find_java_path(version)
 		local jvm_path = "/usr/lib/jvm/"
 		local handle = vim.loop.fs_scandir(jvm_path)
@@ -28,6 +29,14 @@ return {
 		return nil
 	    end
 
+	    local function find_java_debug_path()
+		local mason_path = vim.env.MASON .. "/packages"
+		local jar_pattern = mason_path .. "/java-debug-adapter/extension/server/com.microsoft.java.debug.plugin-*.jar"
+		local bundle_path = vim.fn.glob(jar_pattern, true, true)[1]
+		return bundle_path
+	    end
+
+	    find_java_debug_path()
 	    local path_21 = find_java_path("21")
 	    local path_11 = find_java_path("11")
 	    local path_8  = find_java_path("8")
@@ -109,7 +118,7 @@ return {
 			advancedOrganizeImportsSupport = is_libgdx or nil
 		    },
 		    bundles = {
-			vim.fn.glob("/usr/local/src/java-debug/com.microsoft.java.debug.plugin/target/com.microsoft.java.debug.plugin-0.53.2.jar", true)
+			find_java_debug_path()
 		    },
 		    workspace = workspace_dir,
 		    jvm_args = is_libgdx and {
@@ -121,7 +130,6 @@ return {
 	    }
 
 	    require('jdtls').start_or_attach(config)
-	    -- Your existing nvim-cmp setup (unchanged)
 	    vim.api.nvim_create_autocmd('FileType', {
 		pattern = 'java',
 		callback = function()
@@ -136,6 +144,17 @@ return {
 			    { name = 'path' }
 			})
 		    })
+		end
+	    })
+
+	    vim.api.nvim_create_autocmd('LspAttach', {
+		pattern = "java",
+		callback = function(args)
+		    local client = vim.lsp.get_client_by_id(args.data.client_id)
+		    if client and client.name == "jdtls" then
+			require('jdtls').setup_dap({ hotcodereplace = 'auto' })
+			require('jdtls.dap').setup_dap_main_class_configs()
+		    end
 		end
 	    })
 
@@ -203,71 +222,71 @@ return {
 	    })
 	end
     },
-  -- Angular & TypeScript
+    -- Angular & TypeScript
     {
-        "neovim/nvim-lspconfig",
-        dependencies = {
-            "williamboman/mason.nvim",
-            "williamboman/mason-lspconfig.nvim",
-        },
-        config = function()
-            local lspconfig = require("lspconfig")
-            local mason_packages = vim.fn.stdpath("data") .. "/mason/packages"
-            local ts_lib = mason_packages .. "/typescript-language-server/node_modules/typescript/lib"
-            local ng_lib = mason_packages .. "/angular-language-server/node_modules/@angular/language-server"
+	"neovim/nvim-lspconfig",
+	dependencies = {
+	    "williamboman/mason.nvim",
+	    "williamboman/mason-lspconfig.nvim",
+	},
+	config = function()
+	    local lspconfig = require("lspconfig")
+	    local mason_packages = vim.fn.stdpath("data") .. "/mason/packages"
+	    local ts_lib = mason_packages .. "/typescript-language-server/node_modules/typescript/lib"
+	    local ng_lib = mason_packages .. "/angular-language-server/node_modules/@angular/language-server"
 
-            lspconfig.angularls.setup({
-                cmd = {
-                    "ngserver",
-                    "--stdio",
-                    "--tsProbeLocations", ts_lib,
-                    "--ngProbeLocations", ng_lib
-                },
-                on_new_config = function(new_config, new_root_dir)
-                    -- Si el proyecto tiene node_modules, intentamos usarlos, 
-                    -- pero si falla, el CMD base ya tiene las rutas de Mason.
-                    local p_ts = new_root_dir .. "/node_modules/typescript/lib"
-                    local p_ng = new_root_dir .. "/node_modules/@angular/language-service"
-                    if vim.loop.fs_stat(p_ts) and vim.loop.fs_stat(p_ng) then
-                        new_config.cmd = {
-                            "ngserver",
-                            "--stdio",
-                            "--tsProbeLocations", p_ts,
-                            "--ngProbeLocations", p_ng
-                        }
-                    end
-                end,
-                root_dir = lspconfig.util.root_pattern("angular.json", "project.json", "tsconfig.json"),
-            })
+	    lspconfig.angularls.setup({
+		cmd = {
+		    "ngserver",
+		    "--stdio",
+		    "--tsProbeLocations", ts_lib,
+		    "--ngProbeLocations", ng_lib
+		},
+		on_new_config = function(new_config, new_root_dir)
+		    -- Si el proyecto tiene node_modules, intentamos usarlos, 
+		    -- pero si falla, el CMD base ya tiene las rutas de Mason.
+		    local p_ts = new_root_dir .. "/node_modules/typescript/lib"
+		    local p_ng = new_root_dir .. "/node_modules/@angular/language-service"
+		    if vim.loop.fs_stat(p_ts) and vim.loop.fs_stat(p_ng) then
+			new_config.cmd = {
+			    "ngserver",
+			    "--stdio",
+			    "--tsProbeLocations", p_ts,
+			    "--ngProbeLocations", p_ng
+			}
+		    end
+		end,
+		root_dir = lspconfig.util.root_pattern("angular.json", "project.json", "tsconfig.json"),
+	    })
 
-            lspconfig.ts_ls.setup({})
-        end
+	    lspconfig.ts_ls.setup({})
+	end
     },
-     -- Lua Language Server (Configuración específica para Neovim)
+    -- Lua Language Server (Configuración específica para Neovim)
     {
-        "neovim/nvim-lspconfig",
-        dependencies = {
-            "williamboman/mason.nvim",
-            "williamboman/mason-lspconfig.nvim",
-            "hrsh7th/cmp-nvim-lsp",
-        },
-        config = function()
-            local lspconfig = require("lspconfig")
-            local capabilities = require('cmp_nvim_lsp').default_capabilities()
+	"neovim/nvim-lspconfig",
+	dependencies = {
+	    "williamboman/mason.nvim",
+	    "williamboman/mason-lspconfig.nvim",
+	    "hrsh7th/cmp-nvim-lsp",
+	},
+	config = function()
+	    local lspconfig = require("lspconfig")
+	    local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
-            lspconfig.lua_ls.setup({
-                capabilities = capabilities,
-                settings = {
-                    Lua = {
-                        workspace = {
-                            library = vim.api.nvim_get_runtime_file("", true),
-                            checkThirdParty = false,                         },
-                        telemetry = {
-                            enabled = false, -- Privacidad
-                        },
-                    },
-                },
-            })
-        end
-    },
-}
+	    lspconfig.lua_ls.setup({
+		capabilities = capabilities,
+		settings = {
+		    Lua = {
+			workspace = {
+			    library = vim.api.nvim_get_runtime_file("", true),
+			    checkThirdParty = false,                         },
+			    telemetry = {
+				enabled = false, -- Privacidad
+			    },
+			},
+		    },
+		})
+	    end
+	},
+    }
