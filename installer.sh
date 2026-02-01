@@ -1,7 +1,34 @@
 #!/bin/bash
 
-sudo apt update && sudo apt install -y build-essential curl clang libclang-dev ripgrep fd-find unzip php8.4 composer lua5.1 liblua5.1-0-dev luarocks golang-go ruby ruby-dev python3-pip python3-pynvim python3-venv python3-full
+sudo apt update && sudo apt install -y build-essential \
+    curl \
+    clang \
+    libclang-dev \
+    ripgrep \
+    fd-find \
+    unzip \
+    php8.4 \
+    php8.4-xdebug \
+    composer \
+    lua5.1 \
+    liblua5.1-0-dev \
+    luarocks \
+    golang-go \
+    ruby \
+    ruby-dev \
+    python3-pip \
+    python3-pynvim \
+    python3-venv \
+    python3-full
 
+PHP_INI=$(php --ini | grep "Loaded Configuration File" | awk '{print $4}')
+
+if ! grep -q "\[xdebug\]" "$PHP_INI"; then
+    echo "Inyectando configuración de Xdebug..."
+    echo -e "\n[xdebug]\nxdebug.mode=debug,develop\nxdebug.start_with_request=yes" | sudo tee -a "$PHP_INI" > /dev/null
+else
+    echo "Configuración de Xdebug ya presente. Saltando..."
+fi
 echo "Instalando Rust ..."
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 

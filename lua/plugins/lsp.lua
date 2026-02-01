@@ -212,7 +212,6 @@ return {
 		    }
 		}
 	    }
-	    -- Optional: PHP-specific keymaps
 	    vim.api.nvim_create_autocmd('FileType', {
 		pattern = 'php',
 		callback = function()

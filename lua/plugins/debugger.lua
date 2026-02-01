@@ -11,7 +11,20 @@ return {
 
             dapui.setup()
 
-            -- Mapeos que ya tenías
+            dap.adapters.php = {
+                type = 'executable',
+                command = 'node',
+                args = { vim.fn.stdpath("data") .. "/mason/packages/php-debug-adapter/extension/out/phpDebug.js" }
+            }
+
+            dap.configurations.php = {
+                {
+                    type = 'php',
+                    request = 'launch',
+                    name = 'Listen for Xdebug',
+                }
+            }
+
             vim.keymap.set('n', '<F5>', function() dap.continue() end)
             vim.keymap.set('n', '<F10>', function() dap.step_over() end)
             vim.keymap.set('n', '<F11>', function() dap.step_into() end)
