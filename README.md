@@ -34,6 +34,6 @@ chmod u+x ./installer.sh
 ## Características
 
 * __LSP Integrados:__ Java, PHP, Rust, Lua, Angular
-* __Treesitter:__ Resaltado de sitanxis avanzado
+* __Treesitter:__ Resaltado de sitaxis avanzado
 * __Fuzzy finder:__ Búsqueda rápida de archivos y texto
 
