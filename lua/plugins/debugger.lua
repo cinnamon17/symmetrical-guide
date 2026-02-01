@@ -16,8 +16,8 @@ return {
             vim.keymap.set('n', '<F10>', function() dap.step_over() end)
             vim.keymap.set('n', '<F11>', function() dap.step_into() end)
             vim.keymap.set('n', '<leader>b', function() dap.toggle_breakpoint() end)
+            vim.keymap.set('n', '<leader>B', function() dap.set_breakpoint(vim.fn.input('Breakpoint condition: ')) end)
 
-            -- Configuración para que la UI se abra/cierre sola
             dap.listeners.before.attach.dapui_config = function()
                 dapui.open()
             end
