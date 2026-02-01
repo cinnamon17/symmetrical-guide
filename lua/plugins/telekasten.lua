@@ -11,6 +11,24 @@ return {
 	    templates = vim.fn.expand("~/.local/notas/templates")
 	})
 
+	vim.api.nvim_create_autocmd("BufWritePost", {
+	    pattern = vim.fn.expand("~/.local/notas/*.md"),
+	    callback = function()
+		local source = vim.fn.expand("~/.local/notas/")
+		local target = "cinnamon17@server:/home/cinnamon17/notas/"
+
+		vim.fn.jobstart({
+		    "rsync", "-avz", "--delete", source, target
+		}, {
+		    on_exit = function(job_id, exit_code, event)
+			if exit_code ~= 0 then
+			    print("Error en la sincronización con rsync")
+			end
+		    end
+		})
+	    end,
+	})
+
 	vim.keymap.set("n", "<leader>z", "<cmd>Telekasten panel<CR>")
 	vim.keymap.set("n", "<leader>zf", "<cmd>Telekasten find_notes<CR>")
 	vim.keymap.set("n", "<leader>zg", "<cmd>Telekasten search_notes<CR>")
