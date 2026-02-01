@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo apt update && sudo apt install -y build-essential curl clang libclang-dev ripgrep fd-find unzip php8.4 lua5.1 liblua5.1-0-dev luarocks golang-go ruby ruby-dev python3-pip python3-pynvim python3-venv python3-full
+sudo apt update && sudo apt install -y build-essential curl clang libclang-dev ripgrep fd-find unzip php8.4 composer lua5.1 liblua5.1-0-dev luarocks golang-go ruby ruby-dev python3-pip python3-pynvim python3-venv python3-full
 
 echo "Instalando Rust ..."
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y

@@ -120,7 +120,7 @@ return {
 		capabilities = require('cmp_nvim_lsp').default_capabilities()
 	    }
 
-		require('jdtls').start_or_attach(config)
+	    require('jdtls').start_or_attach(config)
 	    -- Your existing nvim-cmp setup (unchanged)
 	    vim.api.nvim_create_autocmd('FileType', {
 		pattern = 'java',
@@ -154,14 +154,13 @@ return {
     {
 	'phpactor/phpactor',
 	ft = 'php',
-	build = 'composer install',  -- Added build step
-	dependencies = {  -- Added completion dependencies
+	build = 'composer install',
+	dependencies = {
 	    'hrsh7th/nvim-cmp',
 	    'hrsh7th/cmp-nvim-lsp',
 	    'neovim/nvim-lspconfig',
 	},
 	config = function()
-	    -- Your existing PHP Actor configuration
 	    require("lspconfig").phpactor.setup {
 		cmd = { "phpactor", "language-server" },
 		filetypes = { "php" },
@@ -203,5 +202,72 @@ return {
 		end
 	    })
 	end
+    },
+  -- Angular & TypeScript
+    {
+        "neovim/nvim-lspconfig",
+        dependencies = {
+            "williamboman/mason.nvim",
+            "williamboman/mason-lspconfig.nvim",
+        },
+        config = function()
+            local lspconfig = require("lspconfig")
+            local mason_packages = vim.fn.stdpath("data") .. "/mason/packages"
+            local ts_lib = mason_packages .. "/typescript-language-server/node_modules/typescript/lib"
+            local ng_lib = mason_packages .. "/angular-language-server/node_modules/@angular/language-server"
+
+            lspconfig.angularls.setup({
+                cmd = {
+                    "ngserver",
+                    "--stdio",
+                    "--tsProbeLocations", ts_lib,
+                    "--ngProbeLocations", ng_lib
+                },
+                on_new_config = function(new_config, new_root_dir)
+                    -- Si el proyecto tiene node_modules, intentamos usarlos, 
+                    -- pero si falla, el CMD base ya tiene las rutas de Mason.
+                    local p_ts = new_root_dir .. "/node_modules/typescript/lib"
+                    local p_ng = new_root_dir .. "/node_modules/@angular/language-service"
+                    if vim.loop.fs_stat(p_ts) and vim.loop.fs_stat(p_ng) then
+                        new_config.cmd = {
+                            "ngserver",
+                            "--stdio",
+                            "--tsProbeLocations", p_ts,
+                            "--ngProbeLocations", p_ng
+                        }
+                    end
+                end,
+                root_dir = lspconfig.util.root_pattern("angular.json", "project.json", "tsconfig.json"),
+            })
+
+            lspconfig.ts_ls.setup({})
+        end
+    },
+     -- Lua Language Server (Configuración específica para Neovim)
+    {
+        "neovim/nvim-lspconfig",
+        dependencies = {
+            "williamboman/mason.nvim",
+            "williamboman/mason-lspconfig.nvim",
+            "hrsh7th/cmp-nvim-lsp",
+        },
+        config = function()
+            local lspconfig = require("lspconfig")
+            local capabilities = require('cmp_nvim_lsp').default_capabilities()
+
+            lspconfig.lua_ls.setup({
+                capabilities = capabilities,
+                settings = {
+                    Lua = {
+                        workspace = {
+                            library = vim.api.nvim_get_runtime_file("", true),
+                            checkThirdParty = false,                         },
+                        telemetry = {
+                            enabled = false, -- Privacidad
+                        },
+                    },
+                },
+            })
+        end
     },
 }
