@@ -6,25 +6,26 @@ return {
 	"nvim-telescope/telescope.nvim"
     },
     config = function ()
+	local home = vim.fn.expand("~/.local/notas")
 	require('telekasten').setup({
-	    home = vim.fn.expand("~/.local/notas"),
-	    templates = vim.fn.expand("~/.local/notas/templates")
+	    home = home,
+	    templates = home .. "/templates"
 	})
 
 	vim.api.nvim_create_autocmd("BufWritePost", {
-	    pattern = vim.fn.expand("~/.local/notas/*.md"),
+	    pattern = home .. "/*.md",
 	    callback = function()
-		local source = vim.fn.expand("~/.local/notas/")
+		local source = home .. "/" -- Importante el slash para copiar contenido
 		local target = "cinnamon17@server:/home/cinnamon17/notas/"
 
-		vim.fn.jobstart({
-		    "rsync", "-avz", "--delete", source, target
-		}, {
-		    on_exit = function(job_id, exit_code, event)
-			if exit_code ~= 0 then
-			    print("Error en la sincronización con rsync")
+		vim.fn.jobstart({ "rsync", "-avz", "--delete", source, target }, {
+		    on_exit = function(_, exit_code)
+			if exit_code == 0 then
+			    vim.notify("Notas sincronizadas", vim.log.levels.INFO, { title = "Telekasten" })
+			else
+			    vim.notify("Error en rsync: " .. exit_code, vim.log.levels.ERROR)
 			end
-		    end
+		    end,
 		})
 	    end,
 	})
