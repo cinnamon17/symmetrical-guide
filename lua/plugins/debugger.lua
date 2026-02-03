@@ -25,6 +25,17 @@ return {
                 }
             }
 
+	    dap.configurations.java = {
+		{
+		    type = 'java',
+		    request = 'attach',
+		    name = "Attach java",
+		    hostName = "127.0.0.1",
+		    port = 5005,
+		    timeout = 30000,
+		}
+	    }
+
             vim.keymap.set('n', '<F5>', function() dap.continue() end)
             vim.keymap.set('n', '<F10>', function() dap.step_over() end)
             vim.keymap.set('n', '<F11>', function() dap.step_into() end)
