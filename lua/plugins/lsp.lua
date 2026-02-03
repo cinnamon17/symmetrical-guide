@@ -129,10 +129,10 @@ return {
 		capabilities = require('cmp_nvim_lsp').default_capabilities()
 	    }
 
-	    require('jdtls').start_or_attach(config)
 	    vim.api.nvim_create_autocmd('FileType', {
 		pattern = 'java',
 		callback = function()
+		    require('jdtls').start_or_attach(config)
 		    local cmp = require('cmp')
 		    cmp.setup.buffer({
 			completion = {
