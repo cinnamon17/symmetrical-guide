@@ -37,6 +37,28 @@ vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = "Go to next diagnos
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = "Show diagnostic [E]rror message" })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = "Open diagnostics list" })
 
+-- Deshabilitar hjkl en modo normal
+vim.keymap.set('n', 'h', '<Nop>', { noremap = true })
+vim.keymap.set('n', 'j', '<Nop>', { noremap = true })
+vim.keymap.set('n', 'k', '<Nop>', { noremap = true })
+vim.keymap.set('n', 'l', '<Nop>', { noremap = true })
+
+-- Opcional: Mostrar mensaje recordatorio
+vim.keymap.set('n', 'h', function()
+  print("❌ Usa b, B, F, T en su lugar")
+end, { noremap = true })
+
+vim.keymap.set('n', 'j', function()
+  print("❌ Usa Ctrl+d, }, /, * en su lugar")
+end, { noremap = true })
+
+vim.keymap.set('n', 'k', function()
+  print("❌ Usa Ctrl+u, {, ?, # en su lugar")
+end, { noremap = true })
+
+vim.keymap.set('n', 'l', function()
+  print("❌ Usa w, W, f, t en su lugar")
+end, { noremap = true })
 require("lazy").setup({
     spec = {
 	{ import = "plugins" },
