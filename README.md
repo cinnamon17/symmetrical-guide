@@ -11,7 +11,7 @@ __Probado en:__ Debian 13 (trixie) / WSL
 * **Soporte Angular:** Para que el LSP funcione correctamente, el proyecto debe tener las librerías de tipos (solo en dev):
 
 ~~~
-npm install --save-dev @angular/language-service@latest typescript@latest 
+npm install @angular/language-service@latest --save-dev
 ~~~
 
 ## Instalación
