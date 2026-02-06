@@ -20,8 +20,7 @@ vim.o.number = true
 vim.o.clipboard = "unnamedplus";
 vim.opt.shiftwidth = 4
 vim.opt.cmdheight = 2
-vim.deprecated = function ()
-end
+vim.g.python3_host_prog = vim.fn.expand("~/.venv/bin/python")
 
 vim.diagnostic.config({
     virtual_text = true,      -- Show inline virtual text

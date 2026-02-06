@@ -65,3 +65,7 @@ python3 -m venv ~/.local/share/nvim/python_env
 echo "instalar la gema neovim"
 
 gem install neovim
+
+echo "Configurando host provider"
+python3 -m venv ~/.venv
+source ~/.venv/bin/activate && pip install --upgrade pynvim && echo "pynvim actualizado." || echo "Error al actualizar pynvim."
