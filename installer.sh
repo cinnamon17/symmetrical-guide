@@ -19,7 +19,8 @@ sudo apt update && sudo apt install -y build-essential \
     python3-pip \
     python3-pynvim \
     python3-venv \
-    python3-full
+    python3-full \
+    rsync
 
 PHP_INI=$(php --ini | grep "Loaded Configuration File" | awk '{print $4}')
 
