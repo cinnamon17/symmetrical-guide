@@ -9,13 +9,7 @@ return {
 	    "neovim/nvim-lspconfig",
 	},
 	config = function()
-	    local lspconfig = require("lspconfig")
-	    lspconfig.jdtls.setup = function() end
-	    lspconfig.lua_ls.setup({})
-	    lspconfig.rust_analyzer.setup({})
-	    lspconfig.phpactor.setup({})
-	    lspconfig.angularls.setup({})
-	    lspconfig.ts_ls.setup({})
+	    vim.lsp.config('*' ,{})
 	end
     }
 }
