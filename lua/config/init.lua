@@ -38,28 +38,22 @@ vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = "Go to next diagnos
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = "Show diagnostic [E]rror message" })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = "Open diagnostics list" })
 
--- Deshabilitar hjkl en modo normal
-vim.keymap.set('n', 'h', '<Nop>', { noremap = true })
-vim.keymap.set('n', 'j', '<Nop>', { noremap = true })
-vim.keymap.set('n', 'k', '<Nop>', { noremap = true })
-vim.keymap.set('n', 'l', '<Nop>', { noremap = true })
+-- Función para bloquear la tecla si no hay un número previo
+local function jump_only(key, message)
+  if vim.v.count > 0 then
+    return key
+  else
+    print(message)
+    return "<Ignore>"
+  end
+end
 
--- Opcional: Mostrar mensaje recordatorio
-vim.keymap.set('n', 'h', function()
-  print("❌ Usa b, B, F, T en su lugar")
-end, { noremap = true })
+-- Mapeos inteligentes: permiten 10j pero bloquean j solo.
+vim.keymap.set('n', 'h', function() return jump_only('h', "Usa b, B, F, T") end, { expr = true, silent = true })
+vim.keymap.set('n', 'j', function() return jump_only('j', "Usa Ctrl+d, }, /, *") end, { expr = true, silent = true })
+vim.keymap.set('n', 'k', function() return jump_only('k', "Usa Ctrl+u, {, ?, #") end, { expr = true, silent = true })
+vim.keymap.set('n', 'l', function() return jump_only('l', "❌ Usa w, W, f, t") end, { expr = true, silent = true })
 
-vim.keymap.set('n', 'j', function()
-  print("❌ Usa Ctrl+d, }, /, * en su lugar")
-end, { noremap = true })
-
-vim.keymap.set('n', 'k', function()
-  print("❌ Usa Ctrl+u, {, ?, # en su lugar")
-end, { noremap = true })
-
-vim.keymap.set('n', 'l', function()
-  print("❌ Usa w, W, f, t en su lugar")
-end, { noremap = true })
 require("lazy").setup({
     spec = {
 	{ import = "plugins" },
