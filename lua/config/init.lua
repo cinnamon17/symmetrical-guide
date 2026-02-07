@@ -52,7 +52,7 @@ end
 vim.keymap.set('n', 'h', function() return jump_only('h', "Usa b, B, F, T") end, { expr = true, silent = true })
 vim.keymap.set('n', 'j', function() return jump_only('j', "Usa Ctrl+d, }, /, *") end, { expr = true, silent = true })
 vim.keymap.set('n', 'k', function() return jump_only('k', "Usa Ctrl+u, {, ?, #") end, { expr = true, silent = true })
-vim.keymap.set('n', 'l', function() return jump_only('l', "❌ Usa w, W, f, t") end, { expr = true, silent = true })
+vim.keymap.set('n', 'l', function() return jump_only('l', "Usa w, W, f, t") end, { expr = true, silent = true })
 
 require("lazy").setup({
     spec = {
