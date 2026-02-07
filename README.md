@@ -31,6 +31,18 @@ chmod u+x ./installer.sh
 ./installer.sh
 ~~~
 
+En la terminal entrar en Neovim
+
+~~~
+nvim 
+~~~
+
+Instalar los language servers:
+
+~~~
+:MasonInstall phpactor lua-language-server jdtls java-debug-adapter php-debug-adapter rust-analyser 
+~~~
+
 ## Características
 
 * __LSP Integrados:__ Java, PHP, Rust, Lua, Angular
