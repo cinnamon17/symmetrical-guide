@@ -242,8 +242,6 @@ return {
 		    "--ngProbeLocations", ng_lib
 		},
 		on_new_config = function(new_config, new_root_dir)
-		    -- Si el proyecto tiene node_modules, intentamos usarlos, 
-		    -- pero si falla, el CMD base ya tiene las rutas de Mason.
 		    local p_ts = new_root_dir .. "/node_modules/typescript/lib"
 		    local p_ng = new_root_dir .. "/node_modules/@angular/language-service"
 		    if vim.loop.fs_stat(p_ts) and vim.loop.fs_stat(p_ng) then
@@ -271,8 +269,7 @@ return {
 	},
 	config = function()
 	    local capabilities = require('cmp_nvim_lsp').default_capabilities()
-
-	    vim.lsp.config('lua',{
+	    vim.lsp.config('lua_ls',{
 		capabilities = capabilities,
 		settings = {
 		    Lua = {
@@ -287,4 +284,34 @@ return {
 		})
 	    end
 	},
+    {
+	"neovim/nvim-lspconfig",
+	dependencies = {
+	    "williamboman/mason.nvim",
+	    "williamboman/mason-lspconfig.nvim",
+	    "hrsh7th/cmp-nvim-lsp",
+	},
+	config = function()
+	    local mason_packages = vim.fn.stdpath("data") .. "/mason/packages"
+	    local rust_analyzer = mason_packages .. "/rust-analyzer/rust-analyzer-x86_64-unknown-linux-gnu"
+	    local capabilities = require('cmp_nvim_lsp').default_capabilities()
+
+	    vim.lsp.config('rust-analyzer',{
+		cmd = {rust_analyzer},
+		capabilities = capabilities,
+		settings = {
+		    rust_analyzer = {
+			imports = {
+			    granularity = { group = "module" },
+			    prefix = "self",
+			},
+			cargo = {
+			    buildScripts = { enable = true },
+			},
+			procMacro = { enable = true },
+		    }
+		}
+	    })
+	end
+    },
     }
