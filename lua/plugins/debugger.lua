@@ -15,15 +15,36 @@ return {
                 type = 'executable',
                 command = 'node',
                 args = { vim.fn.stdpath("data") .. "/mason/packages/php-debug-adapter/extension/out/phpDebug.js" }
-            }
+	    }
+	    dap.adapters.lldb = {
+		type = "executable",
+		command = vim.fn.stdpath("data") .. "/mason/packages/codelldb/codelldb",
+		name = "lldb",
+	    }
 
-            dap.configurations.php = {
-                {
-                    type = 'php',
-                    request = 'launch',
-                    name = 'Listen for Xdebug',
-                }
-            }
+	    dap.configurations.php = {
+		{
+		    type = 'php',
+		    request = 'launch',
+		    name = 'Listen for Xdebug',
+		}
+	    }
+
+	    dap.configurations.rust = {
+		{
+		    name = "rust-debugger",
+		    type = "lldb",
+		    request = "launch",
+		    program = function()
+			local root_patterns = { ".git" }
+			local root_dir = vim.fs.dirname(vim.fs.find(root_patterns, { upward = true })[1])
+			local workspace = root_dir:match("([^/]+)$")
+			return root_dir .. "/target/debug/" .. workspace
+		    end,
+		    cwd = "${workspaceFolder}",
+		    stopOnEntry = false,
+		}
+	    }
 
 	    dap.configurations.java = {
 		{
@@ -36,24 +57,24 @@ return {
 		}
 	    }
 
-            vim.keymap.set('n', '<F5>', function() dap.continue() end)
-            vim.keymap.set('n', '<F10>', function() dap.step_over() end)
-            vim.keymap.set('n', '<F11>', function() dap.step_into() end)
-            vim.keymap.set('n', '<leader>b', function() dap.toggle_breakpoint() end)
-            vim.keymap.set('n', '<leader>B', function() dap.set_breakpoint(vim.fn.input('Breakpoint condition: ')) end)
+	    vim.keymap.set('n', '<F5>', function() dap.continue() end)
+	    vim.keymap.set('n', '<F10>', function() dap.step_over() end)
+	    vim.keymap.set('n', '<F11>', function() dap.step_into() end)
+	    vim.keymap.set('n', '<leader>b', function() dap.toggle_breakpoint() end)
+	    vim.keymap.set('n', '<leader>B', function() dap.set_breakpoint(vim.fn.input('Breakpoint condition: ')) end)
 
-            dap.listeners.before.attach.dapui_config = function()
-                dapui.open()
-            end
-            dap.listeners.before.launch.dapui_config = function()
-                dapui.open()
-            end
-            dap.listeners.before.event_terminated.dapui_config = function()
-                dapui.close()
-            end
-            dap.listeners.before.event_exited.dapui_config = function()
-                dapui.close()
-            end
-        end
+	    dap.listeners.before.attach.dapui_config = function()
+		dapui.open()
+	    end
+	    dap.listeners.before.launch.dapui_config = function()
+		dapui.open()
+	    end
+	    dap.listeners.before.event_terminated.dapui_config = function()
+		dapui.close()
+	    end
+	    dap.listeners.before.event_exited.dapui_config = function()
+		dapui.close()
+	    end
+	end
     },
 }

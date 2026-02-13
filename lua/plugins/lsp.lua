@@ -230,9 +230,10 @@ return {
 	},
 	config = function()
 	    local lspconfig = require("lspconfig")
-	    local mason_packages = vim.fn.stdpath("data") .. "/mason/packages"
-	    local ts_lib = mason_packages .. "/typescript-language-server/node_modules/typescript/lib"
-	    local ng_lib = mason_packages .. "/angular-language-server/node_modules/@angular/language-server"
+	    local root_patterns = { ".git", "angular.json", "tsconfig.ts"}
+	    local root_dir = vim.fs.dirname(vim.fs.find(root_patterns, { upward = true })[1])
+	    local ts_lib = root_dir .. "/node_modules/typescript/lib"
+	    local ng_lib = root_dir .. "/node_modules/@angular/language-service"
 
 	    lspconfig.angularls.setup({
 		cmd = {
@@ -241,18 +242,6 @@ return {
 		    "--tsProbeLocations", ts_lib,
 		    "--ngProbeLocations", ng_lib
 		},
-		on_new_config = function(new_config, new_root_dir)
-		    local p_ts = new_root_dir .. "/node_modules/typescript/lib"
-		    local p_ng = new_root_dir .. "/node_modules/@angular/language-service"
-		    if vim.loop.fs_stat(p_ts) and vim.loop.fs_stat(p_ng) then
-			new_config.cmd = {
-			    "ngserver",
-			    "--stdio",
-			    "--tsProbeLocations", p_ts,
-			    "--ngProbeLocations", p_ng
-			}
-		    end
-		end,
 		root_dir = lspconfig.util.root_pattern("angular.json", "project.json", "tsconfig.json"),
 	    })
 
@@ -284,34 +273,34 @@ return {
 		})
 	    end
 	},
-    {
-	"neovim/nvim-lspconfig",
-	dependencies = {
-	    "williamboman/mason.nvim",
-	    "williamboman/mason-lspconfig.nvim",
-	    "hrsh7th/cmp-nvim-lsp",
-	},
-	config = function()
-	    local mason_packages = vim.fn.stdpath("data") .. "/mason/packages"
-	    local rust_analyzer = mason_packages .. "/rust-analyzer/rust-analyzer-x86_64-unknown-linux-gnu"
-	    local capabilities = require('cmp_nvim_lsp').default_capabilities()
+	{
+	    "neovim/nvim-lspconfig",
+	    dependencies = {
+		"williamboman/mason.nvim",
+		"williamboman/mason-lspconfig.nvim",
+		"hrsh7th/cmp-nvim-lsp",
+	    },
+	    config = function()
+		local mason_packages = vim.fn.stdpath("data") .. "/mason/packages"
+		local rust_analyzer = mason_packages .. "/rust-analyzer/rust-analyzer-x86_64-unknown-linux-gnu"
+		local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
-	    vim.lsp.config('rust-analyzer',{
-		cmd = {rust_analyzer},
-		capabilities = capabilities,
-		settings = {
-		    rust_analyzer = {
-			imports = {
-			    granularity = { group = "module" },
-			    prefix = "self",
-			},
-			cargo = {
-			    buildScripts = { enable = true },
-			},
-			procMacro = { enable = true },
+		vim.lsp.config('rust-analyzer',{
+		    cmd = {rust_analyzer},
+		    capabilities = capabilities,
+		    settings = {
+			rust_analyzer = {
+			    imports = {
+				granularity = { group = "module" },
+				prefix = "self",
+			    },
+			    cargo = {
+				buildScripts = { enable = true },
+			    },
+			    procMacro = { enable = true },
+			}
 		    }
-		}
-	    })
-	end
-    },
+		})
+	    end
+	},
     }
