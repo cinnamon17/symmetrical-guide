@@ -10,15 +10,5 @@ return {
 	    "hrsh7th/cmp-buffer",
 	    "mfussenegger/nvim-dap"
 	},
-	config = function()
-	    vim.api.nvim_create_autocmd('VimLeave', {
-		callback = function()
-		    if vim.fn.has('unix') == 1 then
-			os.execute("killall -9 java 2>/dev/null")
-		    end
-		end,
-	    })
-	end
-    },
-
+    }
 }

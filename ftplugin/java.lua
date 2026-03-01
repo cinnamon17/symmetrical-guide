@@ -27,12 +27,27 @@ local project_name = vim.fn.fnamemodify(root_dir, ":p:h:t")
 local workspace_dir = vim.fn.stdpath('data') .. '/workspace/' .. project_name
 
 local is_libgdx = vim.fn.findfile('core/build.gradle', root_dir..';') ~= ''
+local jvm_limits = {
+    "-Xms256M",
+    "-Xmx1G",
+}
+
+if is_libgdx then
+    table.insert(jvm_limits, "--add-opens")
+    table.insert(jvm_limits, "java.base/java.util=ALL-UNNAMED")
+end
+
+local cmd = {
+        (vim.env.MASON or (vim.fn.stdpath("data") .. "/mason")) .. '/bin/jdtls',
+        "--java-executable", path_21 .. "/bin/java",
+	"-data", workspace_dir,
+    }
+for _, arg in ipairs(jvm_limits) do
+    table.insert(cmd, "--jvm-arg=" .. arg)
+end
 
 local config = {
-    cmd = {
-        (vim.env.MASON or (vim.fn.stdpath("data") .. "/mason")) .. '/bin/jdtls',
-        "--java-executable", path_21 .. "/bin/java"
-    },
+    cmd = cmd,
     root_dir = root_dir,
     settings = {
         java = {
@@ -48,11 +63,8 @@ local config = {
     init_options = {
         bundles = { find_java_debug_path() },
         workspace = workspace_dir,
-        jvm_args = is_libgdx and { "-Xms1g", "-Xmx4g", "--add-opens", "java.base/java.util=ALL-UNNAMED" } or nil
     },
 }
-
-local opts = { buffer = true, silent = true }
 
 vim.keymap.set('n', '<A-o>', function()
     require('jdtls').organize_imports()
@@ -77,7 +89,6 @@ end, { buffer = true, desc = 'Extract constant (visual)' })
 vim.keymap.set('v', 'crm', function()
     require('jdtls').extract_method({visual = true})
 end, { buffer = true, desc = 'Extract method' })
-
 
 vim.api.nvim_create_autocmd('LspAttach', {
     callback = function(args)

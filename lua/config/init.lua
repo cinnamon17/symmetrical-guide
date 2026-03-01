@@ -33,19 +33,19 @@ vim.diagnostic.config({
     float = true
 })
 
-vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = "Go to previous diagnostic" })
-vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = "Go to next diagnostic" })
+vim.keymap.set('n', '[d', vim.diagnostic.get_prev, { desc = "Go to previous diagnostic" })
+vim.keymap.set('n', ']d', vim.diagnostic.get_next, { desc = "Go to next diagnostic" })
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = "Show diagnostic [E]rror message" })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = "Open diagnostics list" })
 
 -- Función para bloquear la tecla si no hay un número previo
 local function jump_only(key, message)
-  if vim.v.count > 0 then
-    return key
-  else
-    print(message)
-    return "<Ignore>"
-  end
+    if vim.v.count > 0 then
+	return key
+    else
+	print(message)
+	return "<Ignore>"
+    end
 end
 
 -- Mapeos inteligentes: permiten 10j pero bloquean j solo.
@@ -53,6 +53,16 @@ vim.keymap.set('n', 'h', function() return jump_only('h', "Usa b, B, F, T") end,
 vim.keymap.set('n', 'j', function() return jump_only('j', "Usa Ctrl+d, }, /, *") end, { expr = true, silent = true })
 vim.keymap.set('n', 'k', function() return jump_only('k', "Usa Ctrl+u, {, ?, #") end, { expr = true, silent = true })
 vim.keymap.set('n', 'l', function() return jump_only('l', "Usa w, W, f, t") end, { expr = true, silent = true })
+
+vim.api.nvim_create_autocmd("VimLeavePre", {
+    callback = function()
+	local clients = vim.lsp.get_clients()
+	for _, client in ipairs(clients) do
+	    client.stop(500)
+	end
+    end,
+    desc = "Matar procesos LSP huérfanos al salir de Neovim",
+})
 
 require("lazy").setup({
     spec = {
