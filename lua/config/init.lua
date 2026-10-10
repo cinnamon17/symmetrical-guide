@@ -13,16 +13,15 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
     end
 end
 vim.opt.rtp:prepend(lazypath)
-vim.g.loaded_julia_provider = 0
 vim.opt.number = true
 vim.opt.relativenumber = true
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
-vim.o.number = true
 vim.o.clipboard = "unnamedplus";
 vim.opt.shiftwidth = 4
+vim.opt.expandtab = true
 vim.opt.cmdheight = 2
-vim.g.python3_host_prog = vim.fn.expand("~/.venv/bin/python")
+vim.opt.completeopt = { "menu", "menuone", "noselect" }
 
 vim.diagnostic.config({
     virtual_text = true,      -- Show inline virtual text
@@ -43,7 +42,7 @@ local function jump_only(key, message)
     if vim.v.count > 0 then
 	return key
     else
-	print(message)
+	vim.notify(message, vim.log.levels.INFO)
 	return "<Ignore>"
     end
 end
@@ -71,3 +70,9 @@ require("lazy").setup({
     install = { colorscheme = { "catppuccin" } },
     checker = { enabled = false},
 })
+
+-- Debe ir DESPUÉS de lazy.setup(): los servidores ya están declarados por los
+-- specs, así que aquí solo se resuelven configs y se habilitan. Necesita estar
+-- en config-load (y no en un ftplugin) para que el buffer de arranque también
+-- levante su LSP.
+require("config.lsp").setup()
