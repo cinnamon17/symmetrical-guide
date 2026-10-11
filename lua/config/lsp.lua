@@ -92,13 +92,36 @@ local angular_cache_by_root = {}
 -- Roots ya avisados, para no repetir el notify en cada buffer.
 local angular_warned = {}
 
---- Node de language-service cacheado para un major dado, o nil si no está.
+--- ¿La caché de este major está COMPLETA?
+---
+--- No basta con que exista `@angular/language-service`: una caché instalada con
+--- una versión anterior de esta config puede tener solo ese paquete y fallar en
+--- silencio. Se exige además TypeScript, que es lo que ngserver no encuentra sin
+--- él (ngserver exige `typescript >= 5.0` en sus probe locations).
 local function cached_language_service(major)
 	local dir = cache_root() .. "/ng-" .. major .. "/node_modules"
-	if uv.fs_stat(dir .. "/@angular/language-service") then
+	if uv.fs_stat(dir .. "/@angular/language-service") and uv.fs_stat(dir .. "/typescript") then
 		return dir
 	end
 	return nil
+end
+
+--- Paquetes que necesita `@angular/language-service` para funcionar.
+---
+--- OJO: `@angular/language-service` NO declara ninguna dependencia ni peerDependency
+--- en su package.json (es autónomo), pero en la práctica necesita el ecosystem de
+--- Angular y TypeScript para resolver templates. Instalar solo el paquete deja una
+--- caché con un único directorio `@angular/`, y ngserver arranca con
+--- `initialized=true` pero responde `null` a TODO: ni completions, ni hover, ni
+--- diagnósticos. Es un cliente mudo, que es peor que un fallo visible.
+local function language_service_packages(major)
+	return {
+		"@angular/language-service@" .. major,
+		"@angular/compiler@" .. major,
+		"@angular/compiler-cli@" .. major,
+		"@angular/core@" .. major,
+		"typescript@~5.9.0",
+	}
 end
 
 --- Instala @angular/language-service del major correspondiente en la caché.
@@ -111,23 +134,17 @@ local function install_language_service(major)
 	local prefix = cache_root() .. "/ng-" .. major
 	uv.fs_mkdir(prefix, 493) -- 0755
 
-	local cmd = {
-		"npm",
-		"install",
-		"--prefix",
-		prefix,
-		"@angular/language-service@" .. major,
-		"--silent",
-		"--no-fund",
-		"--no-audit",
-	}
+	local cmd = { "npm", "install", "--prefix", prefix }
+	vim.list_extend(cmd, language_service_packages(major))
+	vim.list_extend(cmd, { "--silent", "--no-fund", "--no-audit" })
+
 	local result = vim
 		.system(cmd, { text = true }, function(out)
 			vim.schedule(function()
 				local dir = cache_root() .. "/ng-" .. major .. "/node_modules"
 				if uv.fs_stat(dir .. "/@angular/language-service") then
 					vim.notify(
-						("angular: @angular/language-service@%s instalado en %s"):format(major, dir),
+						("angular: language-service@%s instalado en %s"):format(major, dir),
 						vim.log.levels.INFO
 					)
 				else
@@ -306,6 +323,20 @@ function servers.angularls()
 			"html",
 			"htmlangular",
 		},
+		-- Neovim detecta las plantillas Angular como filetype `htmlangular`
+		-- (runtime/lua/vim/filetype/detect.lua, M.html: basta un `@if`, `@for`,
+		-- `ngIf`... en el contenido). El LSP manda el filetype literal como
+		-- `languageId`, y ngserver SOLO trata un documento como plantilla Angular
+		-- si `languageId === "html"` (index.js, Session.onDidOpenTextDocument).
+		-- Con `htmlangular` el .html no queda asociado a ningún proyecto
+		-- configurado y ngserver no publica diagnósticos, hover ni completion en
+		-- plantillas externas.
+		-- Verificado en el proyecto real sin tocar disco: sin este mapeo, 0
+		-- diagnósticos en .html; con él:
+		--   [ngtsc] Property 'propiedadQueNoExisteXYZ' does not exist on type 'Saludo'.
+		get_language_id = function(_, ft)
+			return ft == "htmlangular" and "html" or ft
+		end,
 		-- `cmd` como función en vez de `before_init`: ngserver lee las probe
 		-- locations de `argv` (`parseStringArray(argv...)`), no de
 		-- `initializationOptions`, así que tienen que ir como argumentos de CLI.
@@ -374,10 +405,16 @@ function servers.ts_ls()
 			"javascript",
 			"javascriptreact",
 		},
-		-- Complemento de angularls: se aparta cuando el proyecto es Angular *y*
-		-- hay language-service disponible. Si angularls no llega a arrancar
-		-- (proyecto Angular sin @angular/language-service resoluble), ts_ls
-		-- entra como relevo para no dejar el buffer sin completions.
+		-- Corre SIEMPRE, también en proyectos Angular. angularls es "angularOnly"
+		-- (ngserver hardcodea `pluginConfig.angularOnly = true`, index.js): en
+		-- .ts NO reporta errores TS, ni completions, ni hover (devuelve nil),
+		-- solo cosas de plantilla. Si ts_ls cede el paso, un .ts de un proyecto
+		-- Angular se queda sin diagnóstico TS y sin completions.
+		-- Medido 2026-10-11 sobre el proyecto real (sin tocar disco):
+		--   error TS en app.ts   -> angularls: diag 0 | con ts_ls: diag 2 [typescript]
+		--   completion en this.  -> angularls: nil  | ts_ls: 13 items
+		-- No hay solapamiento: angularls no responde a TS, así que los dos
+		-- conviven sin duplicar items.
 		root_dir = function(bufnr, on_dir)
 			local root = root_from(bufnr, {
 				"tsconfig.json",
@@ -385,18 +422,9 @@ function servers.ts_ls()
 				"package.json",
 				".git",
 			})
-			if not root then
-				return
+			if root then
+				on_dir(root)
 			end
-			if is_angular_project(root) then
-				-- Solo si angularls NO se va a activar.
-				local major = detect_angular_version(root)
-				if major and cached_language_service(major) then
-					return
-				end
-				-- Sin language-service: ts_ls cubre el TypeScript plano.
-			end
-			on_dir(root)
 		end,
 	})
 end
