@@ -428,6 +428,30 @@ function servers.ts_ls()
 		end,
 	})
 end
+-- C / C++ -----------------------------------------------------------------
+
+function servers.clangd()
+	vim.lsp.config("clangd", {
+		capabilities = cmp_capabilities(),
+		filetypes = { "c", "cpp", "objc", "objcpp", "cuda", "proto" },
+		root_markers = {
+			"build/compile_commands.json", -- Por si lo guardas dentro de build/
+			"compile_commands.json",
+			"CMakeLists.txt",
+			"Makefile",
+			".git",
+		},
+		cmd = {
+			"clangd",
+			"--background-index",
+			"--suggest-missing-includes",
+			"--clang-tidy",
+			"--header-insertion=iwyu",
+			-- Usa los headers del g++ de tu sistema si hace falta
+			"--query-driver=/usr/bin/g++,/usr/bin/gcc",
+		},
+	})
+end
 
 --- Habilita todos los servidores. Se invoca durante la carga de la config, antes
 --- de que Neovim lea el archivo de la línea de órdenes.
@@ -443,6 +467,7 @@ function M.setup()
 	servers.phpactor()
 	servers.angularls()
 	servers.ts_ls()
+        servers.clangd()
 
 	vim.lsp.enable({
 		"lua_ls",
@@ -450,6 +475,7 @@ function M.setup()
 		"phpactor",
 		"angularls",
 		"ts_ls",
+                "clangd"
 	})
 
 	-- catch-up defensivo para cualquier buffer ya abierto (p. ej. session restores)
